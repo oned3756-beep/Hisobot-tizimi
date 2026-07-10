@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"/c/Users/user/.gemini/antigravity/scratch/fastfood-pos-tv\" 2>&1)",
+      "Bash(grep -i -E \"gitignore|\\\\.git$\")",
+      "Bash(timeout 8 npm start)",
+      "Bash(echo \"---exit: $?---\")"
+    ]
+  }
+}

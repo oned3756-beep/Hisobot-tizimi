@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "fastfood-pos",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\user\\.gemini\\antigravity\\scratch\\fastfood-pos-tv", "start"],
+      "port": 3000
+    }
+  ]
+}
