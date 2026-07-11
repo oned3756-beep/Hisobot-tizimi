@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model User {
+  id           String          @id @default(cuid())
+  username     String          @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean         @default(true)
+  objectId     String?
+  object       BusinessObject? @relation(fields: [objectId], references: [id])
+  reports      DailyReport[]   @relation("ReportAuthor")
+  createdAt    DateTime        @default(now())
+
+  @@index([objectId])
+}
+
+model BusinessObject {
+  id        String        @id @default(cuid())
+  nameUz    String
+  nameRu    String
+  slug      String        @unique
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  users     User[]
+  reports   DailyReport[]
+}
+
+model DailyReport {
+  id                 String                    @id @default(cuid())
+  date               DateTime                  @db.Date
+  objectId           String
+  object             BusinessObject            @relation(fields: [objectId], references: [id])
+  visitorCount       Int                       @default(0)
+  cashAmount         Decimal                   @default(0) @db.Decimal(14, 2)
+  cardAmount         Decimal                   @default(0) @db.Decimal(14, 2)
+  transferAmount     Decimal                   @default(0) @db.Decimal(14, 2)
+  qrAmount           Decimal                   @default(0) @db.Decimal(14, 2)
+  totalAmount        Decimal                   @db.Decimal(14, 2)
+  comment            String?                   @db.Text
+  extra              Json?
+  createdById        String
+  createdBy          User                      @relation("ReportAuthor", fields: [createdById], references: [id])
+  organizationEntries ReportOrganizationEntry[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@unique([objectId, date])
+  @@index([date])
+}
+
+model Organization {
+  id        String                    @id @default(cuid())
+  nameUz    String
+  nameRu    String
+  slug      String                    @unique
+  isActive  Boolean                   @default(true)
+  createdAt DateTime                  @default(now())
+  entries   ReportOrganizationEntry[]
+}
+
+model ReportOrganizationEntry {
+  id             String       @id @default(cuid())
+  reportId       String
+  report         DailyReport  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  visitorCount   Int          @default(0)
+
+  @@unique([reportId, organizationId])
+}
