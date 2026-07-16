@@ -10,8 +10,11 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 const initialState: OrganizationFormState = { success: false };
 
+type ObjectOption = { id: string; nameUz: string };
+
 export default function OrganizationRow({
   organization,
+  objects,
   t,
 }: {
   organization: {
@@ -20,7 +23,9 @@ export default function OrganizationRow({
     nameRu: string;
     slug: string;
     isActive: boolean;
+    linkedObjectIds: string[];
   };
+  objects: ObjectOption[];
   t: Dictionary;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -49,6 +54,23 @@ export default function OrganizationRow({
             pattern="[a-z0-9-]+"
             className="w-28 rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-slate-500 focus:outline-none"
           />
+          <div className="flex flex-wrap gap-2">
+            {objects.map((obj) => (
+              <label
+                key={obj.id}
+                className="flex items-center gap-1 text-xs text-slate-600"
+              >
+                <input
+                  type="checkbox"
+                  name="objectIds"
+                  value={obj.id}
+                  defaultChecked={organization.linkedObjectIds.includes(obj.id)}
+                  className="rounded border-slate-300"
+                />
+                {obj.nameUz}
+              </label>
+            ))}
+          </div>
           <button
             type="submit"
             disabled={pending}

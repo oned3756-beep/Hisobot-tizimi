@@ -26,6 +26,7 @@ export async function listAdminReports(filter: AdminReportFilter) {
     include: {
       object: true,
       organizationEntries: { include: { organization: true } },
+      _count: { select: { revisions: true } },
     },
     orderBy: [{ date: "desc" }, { object: { nameUz: "asc" } }],
   });

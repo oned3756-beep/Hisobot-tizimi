@@ -28,7 +28,8 @@ export async function createStaffUserAction(
   const parsed = createUserSchema.safeParse({
     username: formData.get("username"),
     password: formData.get("password"),
-    objectId: formData.get("objectId"),
+    role: formData.get("role"),
+    objectId: formData.get("objectId") || undefined,
   });
 
   if (!parsed.success) {
@@ -55,8 +56,8 @@ export async function createStaffUserAction(
     data: {
       username: parsed.data.username,
       passwordHash,
-      role: "STAFF",
-      objectId: parsed.data.objectId,
+      role: parsed.data.role,
+      objectId: parsed.data.role === "STAFF" ? parsed.data.objectId : null,
     },
   });
 

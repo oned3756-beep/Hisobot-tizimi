@@ -17,7 +17,7 @@ export default function UserRow({
   user: {
     id: string;
     username: string;
-    role: "ADMIN" | "STAFF";
+    role: "ADMIN" | "STAFF" | "CASHIER";
     isActive: boolean;
     objectName: string | null;
   };
@@ -32,7 +32,11 @@ export default function UserRow({
     <tr className="border-b border-slate-100">
       <td className="px-2 py-2 text-slate-800">{user.username}</td>
       <td className="px-2 py-2 text-slate-600">
-        {user.role === "ADMIN" ? t.admin : user.objectName}
+        {user.role === "ADMIN"
+          ? t.admin
+          : user.role === "CASHIER"
+            ? t.roleCashier
+            : user.objectName}
       </td>
       <td className="px-2 py-2 text-center">
         <span

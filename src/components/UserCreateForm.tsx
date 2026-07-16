@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   createStaffUserAction,
   type UserFormState,
@@ -20,6 +20,7 @@ export default function UserCreateForm({
     createStaffUserAction,
     initialState,
   );
+  const [role, setRole] = useState<"STAFF" | "CASHIER">("STAFF");
 
   return (
     <form
@@ -51,21 +52,37 @@ export default function UserCreateForm({
       </div>
       <div>
         <label className="mb-1 block text-xs font-medium text-slate-500">
-          {t.object}
+          {t.role}
         </label>
         <select
-          name="objectId"
-          required
+          name="role"
+          value={role}
+          onChange={(e) => setRole(e.target.value as "STAFF" | "CASHIER")}
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
         >
-          <option value="">{t.selectObject}</option>
-          {objects.map((obj) => (
-            <option key={obj.id} value={obj.id}>
-              {obj.nameUz}
-            </option>
-          ))}
+          <option value="STAFF">{t.roleStaff}</option>
+          <option value="CASHIER">{t.roleCashier}</option>
         </select>
       </div>
+      {role === "STAFF" && (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-500">
+            {t.object}
+          </label>
+          <select
+            name="objectId"
+            required
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
+          >
+            <option value="">{t.selectObject}</option>
+            {objects.map((obj) => (
+              <option key={obj.id} value={obj.id}>
+                {obj.nameUz}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <button
         type="submit"
         disabled={pending}

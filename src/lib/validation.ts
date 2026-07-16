@@ -23,13 +23,32 @@ export const objectSchema = z.object({
 
 export type ObjectInput = z.infer<typeof objectSchema>;
 
-export const createUserSchema = z.object({
-  username: z.string().min(3).max(50),
-  password: z.string().min(6).max(100),
-  objectId: z.string().min(1),
-});
+export const createUserSchema = z
+  .object({
+    username: z.string().min(3).max(50),
+    password: z.string().min(6).max(100),
+    role: z.enum(["STAFF", "CASHIER"]),
+    objectId: z.string().optional(),
+  })
+  .refine((data) => data.role !== "STAFF" || !!data.objectId, {
+    message: "Obyekt tanlanishi shart",
+    path: ["objectId"],
+  });
 
 export const resetPasswordSchema = z.object({
   userId: z.string().min(1),
   password: z.string().min(6).max(100),
+});
+
+export const voucherSchema = z.object({
+  objectId: z.string().min(1, "Obyekt tanlanishi shart"),
+  guestCount: z.coerce.number().int().min(1, "Kamida 1 kishi bo'lishi kerak"),
+  cashAmount: z.coerce.number().min(0),
+  cardAmount: z.coerce.number().min(0),
+  transferAmount: z.coerce.number().min(0),
+  qrAmount: z.coerce.number().min(0),
+});
+
+export const redeemVoucherSchema = z.object({
+  code: z.string().min(1, "Kod kiritilishi shart"),
 });

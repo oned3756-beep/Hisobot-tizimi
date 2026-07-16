@@ -18,6 +18,10 @@ async function requireAdmin() {
   }
 }
 
+function getObjectIds(formData: FormData): string[] {
+  return formData.getAll("objectIds").map(String).filter(Boolean);
+}
+
 export async function createOrganizationAction(
   _prevState: OrganizationFormState,
   formData: FormData,
@@ -49,7 +53,15 @@ export async function createOrganizationAction(
     };
   }
 
-  await prisma.organization.create({ data: parsed.data });
+  const objectIds = getObjectIds(formData);
+  await prisma.organization.create({
+    data: {
+      ...parsed.data,
+      objectLinks: {
+        create: objectIds.map((objectId) => ({ objectId })),
+      },
+    },
+  });
   revalidatePath("/admin/organizations");
   revalidatePath("/report");
   return { success: true };
@@ -87,7 +99,14 @@ export async function updateOrganizationAction(
     };
   }
 
-  await prisma.organization.update({ where: { id }, data: parsed.data });
+  const objectIds = getObjectIds(formData);
+  await prisma.$transaction([
+    prisma.organization.update({ where: { id }, data: parsed.data }),
+    prisma.organizationObject.deleteMany({ where: { organizationId: id } }),
+    prisma.organizationObject.createMany({
+      data: objectIds.map((objectId) => ({ organizationId: id, objectId })),
+    }),
+  ]);
   revalidatePath("/admin/organizations");
   revalidatePath("/report");
   return { success: true };

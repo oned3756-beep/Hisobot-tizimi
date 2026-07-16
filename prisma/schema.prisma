@@ -13,31 +13,39 @@ datasource db {
 enum Role {
   ADMIN
   STAFF
+  CASHIER
 }
 
 model User {
-  id           String          @id @default(cuid())
-  username     String          @unique
-  passwordHash String
-  role         Role
-  isActive     Boolean         @default(true)
-  objectId     String?
-  object       BusinessObject? @relation(fields: [objectId], references: [id])
-  reports      DailyReport[]   @relation("ReportAuthor")
-  createdAt    DateTime        @default(now())
+  id             String          @id @default(cuid())
+  username       String          @unique
+  passwordHash   String
+  role           Role
+  isActive       Boolean         @default(true)
+  failedAttempts Int             @default(0)
+  lockedUntil    DateTime?
+  objectId       String?
+  object         BusinessObject? @relation(fields: [objectId], references: [id])
+  reports        DailyReport[]   @relation("ReportAuthor")
+  revisions      ReportRevision[] @relation("RevisionEditor")
+  soldVouchers   Voucher[]       @relation("VoucherSeller")
+  redeemedVouchers Voucher[]     @relation("VoucherRedeemer")
+  createdAt      DateTime        @default(now())
 
   @@index([objectId])
 }
 
 model BusinessObject {
-  id        String        @id @default(cuid())
-  nameUz    String
-  nameRu    String
-  slug      String        @unique
-  isActive  Boolean       @default(true)
-  createdAt DateTime      @default(now())
-  users     User[]
-  reports   DailyReport[]
+  id              String               @id @default(cuid())
+  nameUz          String
+  nameRu          String
+  slug            String               @unique
+  isActive        Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  users           User[]
+  reports         DailyReport[]
+  organizationLinks OrganizationObject[]
+  vouchers        Voucher[]
 }
 
 model DailyReport {
@@ -56,6 +64,7 @@ model DailyReport {
   createdById        String
   createdBy          User                      @relation("ReportAuthor", fields: [createdById], references: [id])
   organizationEntries ReportOrganizationEntry[]
+  revisions          ReportRevision[]
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 
@@ -71,6 +80,17 @@ model Organization {
   isActive  Boolean                   @default(true)
   createdAt DateTime                  @default(now())
   entries   ReportOrganizationEntry[]
+  objectLinks OrganizationObject[]
+}
+
+model OrganizationObject {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  objectId       String
+  object         BusinessObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, objectId])
 }
 
 model ReportOrganizationEntry {
@@ -82,4 +102,44 @@ model ReportOrganizationEntry {
   visitorCount   Int          @default(0)
 
   @@unique([reportId, organizationId])
+}
+
+model ReportRevision {
+  id         String      @id @default(cuid())
+  reportId   String
+  report     DailyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  snapshot   Json
+  editedById String
+  editedBy   User        @relation("RevisionEditor", fields: [editedById], references: [id])
+  editedAt   DateTime    @default(now())
+
+  @@index([reportId])
+}
+
+enum VoucherStatus {
+  UNUSED
+  USED
+}
+
+model Voucher {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  objectId       String
+  object         BusinessObject @relation(fields: [objectId], references: [id])
+  guestCount     Int
+  cashAmount     Decimal        @default(0) @db.Decimal(14, 2)
+  cardAmount     Decimal        @default(0) @db.Decimal(14, 2)
+  transferAmount Decimal        @default(0) @db.Decimal(14, 2)
+  qrAmount       Decimal        @default(0) @db.Decimal(14, 2)
+  totalAmount    Decimal        @db.Decimal(14, 2)
+  status         VoucherStatus  @default(UNUSED)
+  soldById       String
+  soldBy         User           @relation("VoucherSeller", fields: [soldById], references: [id])
+  soldAt         DateTime       @default(now())
+  usedAt         DateTime?
+  usedById       String?
+  usedBy         User?          @relation("VoucherRedeemer", fields: [usedById], references: [id])
+
+  @@index([objectId])
+  @@index([status])
 }

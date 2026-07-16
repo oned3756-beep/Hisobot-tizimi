@@ -50,7 +50,7 @@ export async function saveReportAction(
   const parsedDate = new Date(`${date}T00:00:00.000Z`);
 
   const organizations = await prisma.organization.findMany({
-    where: { isActive: true },
+    where: { isActive: true, objectLinks: { some: { objectId } } },
   });
 
   let visitorCount: number;
@@ -69,6 +69,33 @@ export async function saveReportAction(
   }
 
   const report = await prisma.$transaction(async (tx) => {
+    const existing = await tx.dailyReport.findUnique({
+      where: { objectId_date: { objectId, date: parsedDate } },
+      include: { organizationEntries: { include: { organization: true } } },
+    });
+
+    if (existing) {
+      await tx.reportRevision.create({
+        data: {
+          reportId: existing.id,
+          editedById: session.user.id,
+          snapshot: {
+            visitorCount: existing.visitorCount,
+            cashAmount: Number(existing.cashAmount),
+            cardAmount: Number(existing.cardAmount),
+            transferAmount: Number(existing.transferAmount),
+            qrAmount: Number(existing.qrAmount),
+            totalAmount: Number(existing.totalAmount),
+            comment: existing.comment,
+            organizationEntries: existing.organizationEntries.map((e) => ({
+              organizationName: e.organization.nameUz,
+              visitorCount: e.visitorCount,
+            })),
+          },
+        },
+      });
+    }
+
     const saved = await tx.dailyReport.upsert({
       where: { objectId_date: { objectId, date: parsedDate } },
       update: {
@@ -151,5 +178,18 @@ export async function listReportsForObject(objectId: string, limit = 30) {
     orderBy: { date: "desc" },
     take: limit,
     include: { organizationEntries: { include: { organization: true } } },
+  });
+}
+
+export async function getReportWithRevisions(reportId: string) {
+  return prisma.dailyReport.findUnique({
+    where: { id: reportId },
+    include: {
+      object: true,
+      revisions: {
+        orderBy: { editedAt: "desc" },
+        include: { editedBy: true },
+      },
+    },
   });
 }

@@ -34,6 +34,9 @@ export default async function ReportLayout({
             <Link href="/report/history" className="hover:text-slate-900">
               {t.navHistory}
             </Link>
+            <Link href="/report/scan" className="hover:text-slate-900">
+              {t.navScanVoucher}
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
             <LocaleSwitch locale={locale} path="/report" />

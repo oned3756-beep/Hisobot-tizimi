@@ -19,7 +19,7 @@ export const authConfig = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string;
-        session.user.role = token.role as "ADMIN" | "STAFF";
+        session.user.role = token.role as "ADMIN" | "STAFF" | "CASHIER";
         session.user.objectId = (token.objectId as string | null) ?? null;
       }
       return session;
@@ -33,6 +33,9 @@ export const authConfig = {
       }
       if (path.startsWith("/report")) {
         return isLoggedIn && auth.user.role === "STAFF";
+      }
+      if (path.startsWith("/cashier")) {
+        return isLoggedIn && auth.user.role === "CASHIER";
       }
       return true;
     },

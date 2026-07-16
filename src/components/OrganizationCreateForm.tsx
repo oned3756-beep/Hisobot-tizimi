@@ -9,7 +9,15 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 const initialState: OrganizationFormState = { success: false };
 
-export default function OrganizationCreateForm({ t }: { t: Dictionary }) {
+type ObjectOption = { id: string; nameUz: string };
+
+export default function OrganizationCreateForm({
+  t,
+  objects,
+}: {
+  t: Dictionary;
+  objects: ObjectOption[];
+}) {
   const [state, formAction, pending] = useActionState(
     createOrganizationAction,
     initialState,
@@ -51,6 +59,25 @@ export default function OrganizationCreateForm({ t }: { t: Dictionary }) {
           pattern="[a-z0-9-]+"
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
         />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <span className="mb-1 block w-full text-xs font-medium text-slate-500">
+          {t.appliesToObjects}
+        </span>
+        {objects.map((obj) => (
+          <label
+            key={obj.id}
+            className="flex items-center gap-1.5 text-sm text-slate-700"
+          >
+            <input
+              type="checkbox"
+              name="objectIds"
+              value={obj.id}
+              className="rounded border-slate-300"
+            />
+            {obj.nameUz}
+          </label>
+        ))}
       </div>
       <button
         type="submit"

@@ -5,9 +5,16 @@ import OrganizationRow from "@/components/OrganizationRow";
 
 export default async function AdminOrganizationsPage() {
   const { t } = await getDictionary();
-  const organizations = await prisma.organization.findMany({
-    orderBy: { nameUz: "asc" },
-  });
+  const [organizations, objects] = await Promise.all([
+    prisma.organization.findMany({
+      orderBy: { nameUz: "asc" },
+      include: { objectLinks: true },
+    }),
+    prisma.businessObject.findMany({
+      where: { isActive: true },
+      orderBy: { nameUz: "asc" },
+    }),
+  ]);
 
   return (
     <div>
@@ -15,7 +22,7 @@ export default async function AdminOrganizationsPage() {
         {t.organizationsTitle}
       </h1>
 
-      <OrganizationCreateForm t={t} />
+      <OrganizationCreateForm t={t} objects={objects} />
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-max text-sm">
@@ -30,7 +37,15 @@ export default async function AdminOrganizationsPage() {
           </thead>
           <tbody>
             {organizations.map((org) => (
-              <OrganizationRow key={org.id} organization={org} t={t} />
+              <OrganizationRow
+                key={org.id}
+                organization={{
+                  ...org,
+                  linkedObjectIds: org.objectLinks.map((l) => l.objectId),
+                }}
+                objects={objects}
+                t={t}
+              />
             ))}
           </tbody>
         </table>

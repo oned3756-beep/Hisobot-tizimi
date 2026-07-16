@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { todayInTashkent, daysAgoInTashkent, isValidDateString } from "@/lib/date";
 import { listAdminReports, getAdminSummary } from "@/lib/queries/adminReports";
@@ -87,6 +88,7 @@ export default async function AdminPage({
                 <th className="px-4 py-2 font-medium">{t.transfer}</th>
                 <th className="px-4 py-2 font-medium">{t.qr}</th>
                 <th className="px-4 py-2 font-medium">{t.total}</th>
+                <th className="px-4 py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -133,6 +135,16 @@ export default async function AdminPage({
                   </td>
                   <td className="px-4 py-2 font-medium text-slate-900">
                     {formatNumber(Number(r.totalAmount))}
+                  </td>
+                  <td className="px-4 py-2">
+                    {r._count.revisions > 0 && (
+                      <Link
+                        href={`/admin/reports/${r.id}/history`}
+                        className="text-slate-500 hover:text-slate-900"
+                      >
+                        {t.historyLink}
+                      </Link>
+                    )}
                   </td>
                 </tr>
               ))}

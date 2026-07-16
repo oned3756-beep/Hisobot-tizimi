@@ -1,4 +1,4 @@
-type ReportNotification = {
+export type ReportNotification = {
   objectNameUz: string;
   date: string;
   visitorCount: number;
@@ -15,7 +15,7 @@ function formatNumber(n: number) {
   return n.toLocaleString("en-US");
 }
 
-function buildMessage(r: ReportNotification): string {
+export function buildMessage(r: ReportNotification): string {
   const lines = [
     `📋 <b>${escapeHtml(r.objectNameUz)}</b>`,
     `Sana: ${r.date}`,
@@ -37,7 +37,7 @@ function buildMessage(r: ReportNotification): string {
   return lines.join("\n");
 }
 
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

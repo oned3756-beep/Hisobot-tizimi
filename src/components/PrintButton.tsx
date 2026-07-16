@@ -1,0 +1,13 @@
+"use client";
+
+export default function PrintButton({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => window.print()}
+      className="rounded-md bg-slate-900 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
+    >
+      {label}
+    </button>
+  );
+}

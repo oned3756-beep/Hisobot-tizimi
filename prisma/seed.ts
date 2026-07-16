@@ -22,6 +22,8 @@ async function main() {
     { nameUz: "Osma ko'prik", nameRu: "Подвесной мост", slug: "osma-korpik" },
     { nameUz: "Transfer xizmati", nameRu: "Трансфер", slug: "transfer" },
     { nameUz: "Mehmonhona", nameRu: "Гостиница", slug: "mehmonhona" },
+    { nameUz: "Xojatxona", nameRu: "Туалет", slug: "xojatxona" },
+    { nameUz: "Parkovka", nameRu: "Парковка", slug: "parkovka" },
   ];
 
   for (const obj of objects) {
@@ -44,9 +46,24 @@ async function main() {
     });
   }
 
+  const cashierPasswordHash = await bcrypt.hash("kassir123", 10);
+  await prisma.user.upsert({
+    where: { username: "kassir" },
+    update: {},
+    create: {
+      username: "kassir",
+      passwordHash: cashierPasswordHash,
+      role: "CASHIER",
+    },
+  });
+
   console.log("Seed complete.");
   console.log("Admin login: admin / admin123");
-  console.log("Staff logins: kanatka/staff123, osma-korpik/staff123, transfer/staff123, mehmonhona/staff123");
+  console.log("Cashier login: kassir / kassir123");
+  console.log(
+    "Staff logins: " +
+      objects.map((o) => `${o.slug}/staff123`).join(", "),
+  );
 }
 
 main()
