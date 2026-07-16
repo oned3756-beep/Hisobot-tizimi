@@ -30,6 +30,7 @@ export async function createStaffUserAction(
     password: formData.get("password"),
     role: formData.get("role"),
     objectId: formData.get("objectId") || undefined,
+    organizationId: formData.get("organizationId") || undefined,
   });
 
   if (!parsed.success) {
@@ -58,6 +59,8 @@ export async function createStaffUserAction(
       passwordHash,
       role: parsed.data.role,
       objectId: parsed.data.role === "STAFF" ? parsed.data.objectId : null,
+      organizationId:
+        parsed.data.role === "CASHIER" ? parsed.data.organizationId : null,
     },
   });
 

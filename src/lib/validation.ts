@@ -29,10 +29,15 @@ export const createUserSchema = z
     password: z.string().min(6).max(100),
     role: z.enum(["STAFF", "CASHIER"]),
     objectId: z.string().optional(),
+    organizationId: z.string().optional(),
   })
   .refine((data) => data.role !== "STAFF" || !!data.objectId, {
     message: "Obyekt tanlanishi shart",
     path: ["objectId"],
+  })
+  .refine((data) => data.role !== "CASHIER" || !!data.organizationId, {
+    message: "Tashkilot tanlanishi shart",
+    path: ["organizationId"],
   });
 
 export const resetPasswordSchema = z.object({

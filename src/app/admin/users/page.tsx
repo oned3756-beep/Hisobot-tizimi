@@ -5,18 +5,26 @@ import UserRow from "@/components/UserRow";
 
 export default async function AdminUsersPage() {
   const { locale, t } = await getDictionary();
-  const [users, objects] = await Promise.all([
+  const [users, objects, organizations] = await Promise.all([
     prisma.user.findMany({
-      include: { object: true },
+      include: { object: true, organization: true },
       orderBy: [{ role: "asc" }, { username: "asc" }],
     }),
     prisma.businessObject.findMany({
       where: { isActive: true },
       orderBy: { nameUz: "asc" },
     }),
+    prisma.organization.findMany({
+      where: { isActive: true },
+      orderBy: { nameUz: "asc" },
+    }),
   ]);
 
   const objectOptions = objects.map((o) => ({
+    id: o.id,
+    nameUz: locale === "ru" ? o.nameRu : o.nameUz,
+  }));
+  const organizationOptions = organizations.map((o) => ({
     id: o.id,
     nameUz: locale === "ru" ? o.nameRu : o.nameUz,
   }));
@@ -27,7 +35,11 @@ export default async function AdminUsersPage() {
         {t.usersTitle}
       </h1>
 
-      <UserCreateForm objects={objectOptions} t={t} />
+      <UserCreateForm
+        objects={objectOptions}
+        organizations={organizationOptions}
+        t={t}
+      />
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full min-w-max text-sm">
@@ -56,6 +68,11 @@ export default async function AdminUsersPage() {
                     ? locale === "ru"
                       ? u.object.nameRu
                       : u.object.nameUz
+                    : null,
+                  organizationName: u.organization
+                    ? locale === "ru"
+                      ? u.organization.nameRu
+                      : u.organization.nameUz
                     : null,
                 }}
               />

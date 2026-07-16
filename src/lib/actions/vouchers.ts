@@ -29,7 +29,11 @@ export async function createVoucherAction(
   formData: FormData,
 ): Promise<VoucherFormState> {
   const session = await auth();
-  if (!session?.user || session.user.role !== "CASHIER") {
+  if (
+    !session?.user ||
+    session.user.role !== "CASHIER" ||
+    !session.user.organizationId
+  ) {
     return { success: false, error: "Ruxsat yo'q" };
   }
 
@@ -54,6 +58,15 @@ export async function createVoucherAction(
     parsed.data;
   const totalAmount = cashAmount + cardAmount + transferAmount + qrAmount;
 
+  const organization = await prisma.organization.findUnique({
+    where: { id: session.user.organizationId },
+  });
+  if (!organization || !organization.isActive) {
+    return { success: false, error: "Tashkilot topilmadi yoki faol emas" };
+  }
+  const commissionPercent = organization.commissionPercent;
+  const commissionAmount = (totalAmount * Number(commissionPercent)) / 100;
+
   let code = generateVoucherCode();
   for (let attempt = 0; attempt < 5; attempt++) {
     const existing = await prisma.voucher.findUnique({ where: { code } });
@@ -71,6 +84,9 @@ export async function createVoucherAction(
       transferAmount,
       qrAmount,
       totalAmount,
+      organizationId: organization.id,
+      commissionPercent,
+      commissionAmount,
       soldById: session.user.id,
     },
   });
@@ -131,7 +147,7 @@ export async function redeemVoucherAction(
 export async function getVoucherById(id: string) {
   return prisma.voucher.findUnique({
     where: { id },
-    include: { object: true },
+    include: { object: true, organization: true },
   });
 }
 
@@ -140,7 +156,7 @@ export async function listVouchersForCashier(cashierId: string, limit = 50) {
     where: { soldById: cashierId },
     orderBy: { soldAt: "desc" },
     take: limit,
-    include: { object: true },
+    include: { object: true, organization: true },
   });
 }
 

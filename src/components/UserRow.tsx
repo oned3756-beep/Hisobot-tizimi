@@ -20,6 +20,7 @@ export default function UserRow({
     role: "ADMIN" | "STAFF" | "CASHIER";
     isActive: boolean;
     objectName: string | null;
+    organizationName: string | null;
   };
   t: Dictionary;
 }) {
@@ -35,7 +36,7 @@ export default function UserRow({
         {user.role === "ADMIN"
           ? t.admin
           : user.role === "CASHIER"
-            ? t.roleCashier
+            ? user.organizationName
             : user.objectName}
       </td>
       <td className="px-2 py-2 text-center">

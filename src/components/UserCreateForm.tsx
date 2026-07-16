@@ -11,9 +11,11 @@ const initialState: UserFormState = { success: false };
 
 export default function UserCreateForm({
   objects,
+  organizations,
   t,
 }: {
   objects: { id: string; nameUz: string }[];
+  organizations: { id: string; nameUz: string }[];
   t: Dictionary;
 }) {
   const [state, formAction, pending] = useActionState(
@@ -78,6 +80,25 @@ export default function UserCreateForm({
             {objects.map((obj) => (
               <option key={obj.id} value={obj.id}>
                 {obj.nameUz}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {role === "CASHIER" && (
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-500">
+            {t.organization}
+          </label>
+          <select
+            name="organizationId"
+            required
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
+          >
+            <option value="">{t.selectOrganization}</option>
+            {organizations.map((org) => (
+              <option key={org.id} value={org.id}>
+                {org.nameUz}
               </option>
             ))}
           </select>
