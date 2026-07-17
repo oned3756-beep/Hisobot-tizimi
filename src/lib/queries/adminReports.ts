@@ -32,6 +32,50 @@ export async function listAdminReports(filter: AdminReportFilter) {
   });
 }
 
+export async function getRedeemedVoucherSummary(filter: AdminReportFilter) {
+  const where: Prisma.VoucherWhereInput = {
+    status: "USED",
+    usedAt: {
+      gte: new Date(`${filter.from}T00:00:00.000Z`),
+      lte: new Date(`${filter.to}T23:59:59.999Z`),
+    },
+  };
+  if (filter.objectIds && filter.objectIds.length > 0) {
+    where.objectId = { in: filter.objectIds };
+  }
+
+  const rows = await prisma.voucher.findMany({
+    where,
+    select: {
+      guestCount: true,
+      cashAmount: true,
+      cardAmount: true,
+      transferAmount: true,
+      qrAmount: true,
+      totalAmount: true,
+    },
+  });
+
+  return rows.reduce(
+    (acc, v) => ({
+      visitorCount: acc.visitorCount + v.guestCount,
+      cashAmount: acc.cashAmount + Number(v.cashAmount),
+      cardAmount: acc.cardAmount + Number(v.cardAmount),
+      transferAmount: acc.transferAmount + Number(v.transferAmount),
+      qrAmount: acc.qrAmount + Number(v.qrAmount),
+      totalAmount: acc.totalAmount + Number(v.totalAmount),
+    }),
+    {
+      visitorCount: 0,
+      cashAmount: 0,
+      cardAmount: 0,
+      transferAmount: 0,
+      qrAmount: 0,
+      totalAmount: 0,
+    },
+  );
+}
+
 export async function getAdminSummary(filter: AdminReportFilter) {
   const rows = await prisma.dailyReport.findMany({
     where: buildWhere(filter),

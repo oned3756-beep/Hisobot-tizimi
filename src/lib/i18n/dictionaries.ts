@@ -125,6 +125,9 @@ export const dictionaries = {
     backToVouchers: "Vaucherlarga qaytash",
     reprint: "Qayta chop etish",
     actions: "Amallar",
+    manualReports: "Qo'lda kiritilgan",
+    fromVouchers: "Vaucherlardan",
+    combinedTotal: "Umumiy daromad",
   },
   ru: {
     appTitle: "Система отчётов",
@@ -252,6 +255,9 @@ export const dictionaries = {
     backToVouchers: "Назад к ваучерам",
     reprint: "Повторная печать",
     actions: "Действия",
+    manualReports: "Введено вручную",
+    fromVouchers: "По ваучерам",
+    combinedTotal: "Общий доход",
   },
 } as const;
 

@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { todayInTashkent, daysAgoInTashkent, isValidDateString } from "@/lib/date";
-import { listAdminReports, getAdminSummary } from "@/lib/queries/adminReports";
+import {
+  listAdminReports,
+  getAdminSummary,
+  getRedeemedVoucherSummary,
+} from "@/lib/queries/adminReports";
 import { deleteReportAction } from "@/lib/actions/report";
 import { getDictionary } from "@/lib/i18n/getLocale";
 import AdminFilters from "@/components/AdminFilters";
@@ -40,10 +44,16 @@ export default async function AdminPage({
   }));
 
   const filter = { from, to, objectIds };
-  const [reports, summary] = await Promise.all([
+  const [reports, summary, voucherSummary] = await Promise.all([
     listAdminReports(filter),
     getAdminSummary(filter),
+    getRedeemedVoucherSummary(filter),
   ]);
+
+  const combined = {
+    visitorCount: summary.visitorCount + voucherSummary.visitorCount,
+    totalAmount: summary.totalAmount + voucherSummary.totalAmount,
+  };
 
   const exportParams = new URLSearchParams();
   exportParams.set("from", from);
@@ -73,6 +83,49 @@ export default async function AdminPage({
         <SummaryCard label={t.transfer} value={formatNumber(summary.transferAmount)} />
         <SummaryCard label={t.qr} value={formatNumber(summary.qrAmount)} />
         <SummaryCard label={t.total} value={formatNumber(summary.totalAmount)} highlight />
+      </div>
+
+      <div className="mb-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-left text-slate-500">
+              <th className="px-4 py-2 font-medium"></th>
+              <th className="px-4 py-2 text-right font-medium">
+                {t.visitorCount}
+              </th>
+              <th className="px-4 py-2 text-right font-medium">{t.total}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-slate-100">
+              <td className="px-4 py-2 text-slate-600">{t.manualReports}</td>
+              <td className="px-4 py-2 text-right text-slate-800">
+                {formatNumber(summary.visitorCount)}
+              </td>
+              <td className="px-4 py-2 text-right text-slate-800">
+                {formatNumber(summary.totalAmount)}
+              </td>
+            </tr>
+            <tr className="border-b border-slate-100">
+              <td className="px-4 py-2 text-slate-600">{t.fromVouchers}</td>
+              <td className="px-4 py-2 text-right text-slate-800">
+                {formatNumber(voucherSummary.visitorCount)}
+              </td>
+              <td className="px-4 py-2 text-right text-slate-800">
+                {formatNumber(voucherSummary.totalAmount)}
+              </td>
+            </tr>
+            <tr className="bg-slate-900 font-semibold text-white">
+              <td className="px-4 py-2">{t.combinedTotal}</td>
+              <td className="px-4 py-2 text-right">
+                {formatNumber(combined.visitorCount)}
+              </td>
+              <td className="px-4 py-2 text-right">
+                {formatNumber(combined.totalAmount)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {reports.length === 0 ? (
