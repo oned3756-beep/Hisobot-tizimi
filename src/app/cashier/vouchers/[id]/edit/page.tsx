@@ -1,20 +1,29 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { getVoucherById, updateVoucherAction } from "@/lib/actions/vouchers";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import {
+  getVoucherForCashier,
+  cashierUpdateVoucherAction,
+} from "@/lib/actions/vouchers";
 import { getDictionary } from "@/lib/i18n/getLocale";
 import VoucherEditForm from "@/components/VoucherEditForm";
 
-export default async function VoucherEditPage({
+export default async function CashierVoucherEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
   const { locale, t } = await getDictionary();
-  const voucher = await getVoucherById(id);
+  const voucher = await getVoucherForCashier(id, session!.user.id);
 
   if (!voucher) {
     notFound();
+  }
+  // Ishlatilgan vaucherni kassir tahrirlay olmaydi
+  if (voucher.status === "USED") {
+    redirect("/cashier/history");
   }
 
   const objectName = locale === "ru" ? voucher.object.nameRu : voucher.object.nameUz;
@@ -28,7 +37,7 @@ export default async function VoucherEditPage({
           {t.editVoucherTitle} — {voucher.code}
         </h1>
         <Link
-          href="/admin/vouchers"
+          href="/cashier/history"
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
         >
           {t.backToVouchers}
@@ -46,7 +55,7 @@ export default async function VoucherEditPage({
           transferAmount: Number(voucher.transferAmount),
           qrAmount: Number(voucher.qrAmount),
         }}
-        action={updateVoucherAction}
+        action={cashierUpdateVoucherAction}
         t={t}
       />
     </div>

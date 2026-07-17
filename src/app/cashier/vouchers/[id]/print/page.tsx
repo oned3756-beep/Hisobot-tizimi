@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { getVoucherById } from "@/lib/actions/vouchers";
+import { auth } from "@/lib/auth";
+import { getVoucherForCashier } from "@/lib/actions/vouchers";
 import { getDictionary } from "@/lib/i18n/getLocale";
 import PrintButton from "@/components/PrintButton";
 
@@ -22,8 +23,9 @@ export default async function VoucherPrintPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
   const { locale, t } = await getDictionary();
-  const voucher = await getVoucherById(id);
+  const voucher = await getVoucherForCashier(id, session!.user.id);
 
   if (!voucher) {
     notFound();

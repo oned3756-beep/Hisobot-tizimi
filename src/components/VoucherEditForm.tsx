@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { updateVoucherAction, type VoucherFormState } from "@/lib/actions/vouchers";
+import type { VoucherFormState } from "@/lib/actions/vouchers";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 const initialState: VoucherFormState = { success: false };
 
 export default function VoucherEditForm({
   voucher,
+  action,
   t,
 }: {
   voucher: {
@@ -18,12 +19,13 @@ export default function VoucherEditForm({
     transferAmount: number;
     qrAmount: number;
   };
+  action: (
+    state: VoucherFormState,
+    formData: FormData,
+  ) => Promise<VoucherFormState>;
   t: Dictionary;
 }) {
-  const [state, formAction, pending] = useActionState(
-    updateVoucherAction,
-    initialState,
-  );
+  const [state, formAction, pending] = useActionState(action, initialState);
   const [amounts, setAmounts] = useState({
     cashAmount: voucher.cashAmount,
     cardAmount: voucher.cardAmount,

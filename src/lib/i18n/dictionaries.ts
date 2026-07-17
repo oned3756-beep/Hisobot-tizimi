@@ -123,6 +123,8 @@ export const dictionaries = {
     editReportTitle: "Hisobotni tahrirlash",
     voucherUpdated: "Vaucher yangilandi",
     backToVouchers: "Vaucherlarga qaytash",
+    reprint: "Qayta chop etish",
+    actions: "Amallar",
   },
   ru: {
     appTitle: "Система отчётов",
@@ -248,6 +250,8 @@ export const dictionaries = {
     editReportTitle: "Изменить отчёт",
     voucherUpdated: "Ваучер обновлён",
     backToVouchers: "Назад к ваучерам",
+    reprint: "Повторная печать",
+    actions: "Действия",
   },
 } as const;
 

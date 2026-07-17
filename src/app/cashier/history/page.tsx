@@ -1,6 +1,11 @@
+import Link from "next/link";
 import { auth } from "@/lib/auth";
-import { listVouchersForCashier } from "@/lib/actions/vouchers";
+import {
+  listVouchersForCashier,
+  cashierDeleteVoucherAction,
+} from "@/lib/actions/vouchers";
 import { getDictionary } from "@/lib/i18n/getLocale";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 function formatNumber(n: number) {
   return n.toLocaleString("en-US");
@@ -38,6 +43,7 @@ export default async function CashierHistoryPage() {
                 <th className="px-4 py-2 font-medium">{t.total}</th>
                 <th className="px-4 py-2 font-medium">{t.statusLabel}</th>
                 <th className="px-4 py-2 font-medium">{t.soldAt}</th>
+                <th className="px-4 py-2 font-medium">{t.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -68,6 +74,34 @@ export default async function CashierHistoryPage() {
                   </td>
                   <td className="px-4 py-2 text-slate-500">
                     {formatDateTime(v.soldAt)}
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/cashier/vouchers/${v.id}/print`}
+                        className="text-slate-500 hover:text-slate-900"
+                      >
+                        {t.reprint}
+                      </Link>
+                      {v.status === "UNUSED" && (
+                        <>
+                          <Link
+                            href={`/cashier/vouchers/${v.id}/edit`}
+                            className="text-slate-500 hover:text-slate-900"
+                          >
+                            {t.edit}
+                          </Link>
+                          <form action={cashierDeleteVoucherAction}>
+                            <input type="hidden" name="id" value={v.id} />
+                            <ConfirmSubmitButton
+                              label={t.delete}
+                              confirmMessage={t.confirmDelete}
+                              className="rounded-md border border-red-300 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
+                            />
+                          </form>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

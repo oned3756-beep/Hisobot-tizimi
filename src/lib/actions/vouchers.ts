@@ -213,9 +213,94 @@ export async function updateVoucherAction(
   return { success: true };
 }
 
+export async function cashierUpdateVoucherAction(
+  _prevState: VoucherFormState,
+  formData: FormData,
+): Promise<VoucherFormState> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CASHIER") {
+    return { success: false, error: "Ruxsat yo'q" };
+  }
+
+  const id = formData.get("id") as string;
+  const parsed = adminVoucherEditSchema.safeParse({
+    guestCount: formData.get("guestCount"),
+    cashAmount: formData.get("cashAmount"),
+    cardAmount: formData.get("cardAmount"),
+    transferAmount: formData.get("transferAmount"),
+    qrAmount: formData.get("qrAmount"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Ma'lumotlarda xatolik bor",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const voucher = await prisma.voucher.findUnique({ where: { id } });
+  if (!voucher || voucher.soldById !== session.user.id) {
+    return { success: false, error: "Vaucher topilmadi" };
+  }
+  if (voucher.status === "USED") {
+    return {
+      success: false,
+      error: "Ishlatilgan vaucherni o'zgartirib bo'lmaydi",
+    };
+  }
+
+  const { guestCount, cashAmount, cardAmount, transferAmount, qrAmount } =
+    parsed.data;
+  const totalAmount = cashAmount + cardAmount + transferAmount + qrAmount;
+  const commissionAmount =
+    (totalAmount * Number(voucher.commissionPercent)) / 100;
+
+  await prisma.voucher.update({
+    where: { id },
+    data: {
+      guestCount,
+      cashAmount,
+      cardAmount,
+      transferAmount,
+      qrAmount,
+      totalAmount,
+      commissionAmount,
+    },
+  });
+
+  revalidatePath("/cashier/history");
+  return { success: true };
+}
+
+export async function cashierDeleteVoucherAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "CASHIER") {
+    return;
+  }
+  const id = formData.get("id") as string;
+  const voucher = await prisma.voucher.findUnique({ where: { id } });
+  if (
+    !voucher ||
+    voucher.soldById !== session.user.id ||
+    voucher.status === "USED"
+  ) {
+    return;
+  }
+  await prisma.voucher.delete({ where: { id } }).catch(() => null);
+  revalidatePath("/cashier/history");
+}
+
 export async function getVoucherById(id: string) {
   return prisma.voucher.findUnique({
     where: { id },
+    include: { object: true, organization: true },
+  });
+}
+
+export async function getVoucherForCashier(id: string, cashierId: string) {
+  return prisma.voucher.findFirst({
+    where: { id, soldById: cashierId },
     include: { object: true, organization: true },
   });
 }
