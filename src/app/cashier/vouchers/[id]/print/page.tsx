@@ -41,40 +41,65 @@ export default async function VoucherPrintPage({
     locale === "ru" ? voucher.organization.nameRu : voucher.organization.nameUz;
   const soldAt = formatDateTime(voucher.soldAt);
 
+  const exact = {
+    WebkitPrintColorAdjust: "exact",
+    printColorAdjust: "exact",
+  } as const;
+
   const Stub = ({ label }: { label: string }) => (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm print:break-inside-avoid print:shadow-none">
+    <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm print:break-inside-avoid print:shadow-none">
+      {/* Rangli sarlavha lentasi */}
       <div
-        className="flex items-center justify-between bg-slate-900 px-6 py-3 text-white"
-        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+        className="flex items-center justify-between px-6 py-3 text-white"
+        style={{
+          ...exact,
+          background: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
+        }}
       >
-        <span className="text-xs font-bold tracking-[0.2em]">{label}</span>
-        <span className="text-xs font-medium text-slate-300">
-          {organizationName}
+        <div className="flex items-center gap-2">
+          <span className="text-lg">🎟️</span>
+          <span className="text-sm font-bold tracking-[0.15em]">
+            {organizationName}
+          </span>
+        </div>
+        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold tracking-[0.15em]">
+          {label}
         </span>
       </div>
-      <div className="grid grid-cols-[auto_1fr] gap-6 bg-white p-6">
+
+      <div className="grid grid-cols-[auto_1fr] gap-6 p-6">
         <div className="flex flex-col items-center">
-          <div className="rounded-xl border-2 border-slate-200 p-2">
+          <div className="rounded-xl border-2 border-emerald-100 bg-white p-2">
             <img src={qrDataUrl} alt={voucher.code} className="h-36 w-36" />
           </div>
-          <div className="mt-2 font-mono text-lg font-bold tracking-widest text-slate-900">
+          <div className="mt-2 rounded-md bg-slate-900 px-3 py-1 font-mono text-base font-bold tracking-widest text-white" style={exact}>
             {voucher.code}
           </div>
         </div>
-        <div className="flex flex-col justify-center gap-1.5">
-          <div className="text-xl font-semibold text-slate-900">
-            {objectName}
-          </div>
-          <div className="flex items-center justify-between border-b border-dotted border-slate-200 py-1 text-sm">
+
+        <div className="flex flex-col justify-center gap-2">
+          <div className="text-2xl font-bold text-slate-900">{objectName}</div>
+          {voucher.serviceName && (
+            <div
+              className="inline-flex w-fit rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700"
+              style={exact}
+            >
+              {voucher.serviceName}
+            </div>
+          )}
+          <div className="mt-1 flex items-center justify-between border-b border-dotted border-slate-200 py-1 text-sm">
             <span className="text-slate-500">{t.guestCount}</span>
-            <span className="font-semibold text-slate-900">
+            <span className="text-base font-bold text-slate-900">
               {voucher.guestCount}
             </span>
           </div>
-          <div className="flex items-center justify-between border-b border-dotted border-slate-200 py-1 text-sm">
-            <span className="text-slate-500">{t.total}</span>
-            <span className="font-semibold text-slate-900">
+          <div className="flex items-baseline justify-between py-1">
+            <span className="text-sm text-slate-500">{t.total}</span>
+            <span className="text-2xl font-extrabold text-emerald-700" style={exact}>
               {formatNumber(Number(voucher.totalAmount))}
+              <span className="ml-1 text-xs font-medium text-slate-400">
+                so&apos;m
+              </span>
             </span>
           </div>
           <div className="pt-1 text-xs text-slate-400">

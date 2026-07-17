@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { createUserSchema, resetPasswordSchema } from "@/lib/validation";
+import {
+  createUserSchema,
+  resetPasswordSchema,
+  updateUsernameSchema,
+} from "@/lib/validation";
 
 export type UserFormState = {
   success: boolean;
@@ -62,6 +66,41 @@ export async function createStaffUserAction(
       organizationId:
         parsed.data.role === "CASHIER" ? parsed.data.organizationId : null,
     },
+  });
+
+  revalidatePath("/admin/users");
+  return { success: true };
+}
+
+export async function updateUsernameAction(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
+  await requireAdmin();
+
+  const parsed = updateUsernameSchema.safeParse({
+    userId: formData.get("userId"),
+    username: formData.get("username"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Ma'lumotlarda xatolik bor",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { username: parsed.data.username },
+  });
+  if (existing && existing.id !== parsed.data.userId) {
+    return { success: false, error: "Bu login allaqachon band" };
+  }
+
+  await prisma.user.update({
+    where: { id: parsed.data.userId },
+    data: { username: parsed.data.username },
   });
 
   revalidatePath("/admin/users");

@@ -9,23 +9,32 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 const initialState: VoucherFormState = { success: false };
 
+type ServiceOption = { id: string; name: string; price: number };
+
 export default function VoucherSellForm({
   t,
   objects,
+  servicesByObject,
 }: {
   t: Dictionary;
   objects: { id: string; nameUz: string }[];
+  servicesByObject: Record<string, ServiceOption[]>;
 }) {
   const [state, formAction, pending] = useActionState(
     createVoucherAction,
     initialState,
   );
+  const [objectId, setObjectId] = useState("");
+  const [serviceId, setServiceId] = useState("");
+  const [guestCount, setGuestCount] = useState(1);
   const [amounts, setAmounts] = useState({
     cashAmount: 0,
     cardAmount: 0,
     transferAmount: 0,
     qrAmount: 0,
   });
+
+  const services = objectId ? (servicesByObject[objectId] ?? []) : [];
 
   const total =
     (Number(amounts.cashAmount) || 0) +
@@ -34,6 +43,20 @@ export default function VoucherSellForm({
     (Number(amounts.qrAmount) || 0);
 
   const fieldError = (field: string) => state.fieldErrors?.[field]?.[0];
+
+  // Xizmat yoki mehmon soni o'zgarganda narxni avtomatik hisoblab, naqdga qo'yamiz
+  function applyServicePrice(svcId: string, guests: number) {
+    const svc = services.find((s) => s.id === svcId);
+    if (svc) {
+      const sum = svc.price * (Number(guests) || 0);
+      setAmounts({
+        cashAmount: sum,
+        cardAmount: 0,
+        transferAmount: 0,
+        qrAmount: 0,
+      });
+    }
+  }
 
   return (
     <form
@@ -46,6 +69,8 @@ export default function VoucherSellForm({
         </div>
       )}
 
+      <input type="hidden" name="serviceId" value={serviceId} />
+
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">
           {t.object}
@@ -53,6 +78,11 @@ export default function VoucherSellForm({
         <select
           name="objectId"
           required
+          value={objectId}
+          onChange={(e) => {
+            setObjectId(e.target.value);
+            setServiceId("");
+          }}
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
         >
           <option value="">{t.selectObject}</option>
@@ -67,6 +97,29 @@ export default function VoucherSellForm({
         )}
       </div>
 
+      {services.length > 0 && (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            {t.service}
+          </label>
+          <select
+            value={serviceId}
+            onChange={(e) => {
+              setServiceId(e.target.value);
+              applyServicePrice(e.target.value, guestCount);
+            }}
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          >
+            <option value="">{t.selectService}</option>
+            {services.map((svc) => (
+              <option key={svc.id} value={svc.id}>
+                {svc.name} — {svc.price.toLocaleString("en-US")}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">
           {t.guestCount}
@@ -76,7 +129,12 @@ export default function VoucherSellForm({
           name="guestCount"
           min={1}
           step={1}
-          defaultValue={1}
+          value={guestCount}
+          onChange={(e) => {
+            const g = Number(e.target.value);
+            setGuestCount(g);
+            if (serviceId) applyServicePrice(serviceId, g);
+          }}
           required
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
         />

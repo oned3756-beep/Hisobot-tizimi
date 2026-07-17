@@ -23,6 +23,9 @@ export default async function AdminLayout({
             <Link href="/admin/objects" className="hover:text-slate-900">
               {t.navObjects}
             </Link>
+            <Link href="/admin/services" className="hover:text-slate-900">
+              {t.navServices}
+            </Link>
             <Link href="/admin/organizations" className="hover:text-slate-900">
               {t.navOrganizations}
             </Link>

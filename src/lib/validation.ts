@@ -51,8 +51,20 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(6).max(100),
 });
 
+export const updateUsernameSchema = z.object({
+  userId: z.string().min(1),
+  username: z.string().min(3).max(50),
+});
+
+export const serviceSchema = z.object({
+  objectId: z.string().min(1, "Obyekt tanlanishi shart"),
+  name: z.string().min(1).max(200),
+  price: z.coerce.number().min(0),
+});
+
 export const voucherSchema = z.object({
   objectId: z.string().min(1, "Obyekt tanlanishi shart"),
+  serviceId: z.string().optional(),
   guestCount: z.coerce.number().int().min(1, "Kamida 1 kishi bo'lishi kerak"),
   cashAmount: z.coerce.number().min(0),
   cardAmount: z.coerce.number().min(0),

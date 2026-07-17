@@ -49,6 +49,7 @@ model BusinessObject {
   reports         DailyReport[]
   organizationLinks OrganizationObject[]
   vouchers        Voucher[]
+  services        Service[]
 }
 
 model DailyReport {
@@ -133,6 +134,9 @@ model Voucher {
   objectId          String
   object            BusinessObject @relation(fields: [objectId], references: [id])
   guestCount        Int
+  serviceId         String?
+  service           Service?       @relation(fields: [serviceId], references: [id])
+  serviceName       String?
   cashAmount        Decimal        @default(0) @db.Decimal(14, 2)
   cardAmount        Decimal        @default(0) @db.Decimal(14, 2)
   transferAmount    Decimal        @default(0) @db.Decimal(14, 2)
@@ -153,4 +157,17 @@ model Voucher {
   @@index([objectId])
   @@index([organizationId])
   @@index([status])
+}
+
+model Service {
+  id        String         @id @default(cuid())
+  objectId  String
+  object    BusinessObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  name      String
+  price     Decimal        @db.Decimal(14, 2)
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  vouchers  Voucher[]
+
+  @@index([objectId])
 }

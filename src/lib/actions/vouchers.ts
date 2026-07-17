@@ -43,6 +43,7 @@ export async function createVoucherAction(
 
   const parsed = voucherSchema.safeParse({
     objectId: formData.get("objectId"),
+    serviceId: formData.get("serviceId") || undefined,
     guestCount: formData.get("guestCount"),
     cashAmount: formData.get("cashAmount"),
     cardAmount: formData.get("cardAmount"),
@@ -58,8 +59,15 @@ export async function createVoucherAction(
     };
   }
 
-  const { objectId, guestCount, cashAmount, cardAmount, transferAmount, qrAmount } =
-    parsed.data;
+  const {
+    objectId,
+    serviceId,
+    guestCount,
+    cashAmount,
+    cardAmount,
+    transferAmount,
+    qrAmount,
+  } = parsed.data;
   const totalAmount = cashAmount + cardAmount + transferAmount + qrAmount;
 
   const organization = await prisma.organization.findUnique({
@@ -70,6 +78,18 @@ export async function createVoucherAction(
   }
   const commissionPercent = organization.commissionPercent;
   const commissionAmount = (totalAmount * Number(commissionPercent)) / 100;
+
+  // Xizmat tanlangan bo'lsa, uni tekshirib nomini saqlaymiz (mijozdan kelgan
+  // nomga ishonmaymiz — serverda o'z bazamizdan olamiz).
+  let finalServiceId: string | null = null;
+  let serviceName: string | null = null;
+  if (serviceId) {
+    const svc = await prisma.service.findUnique({ where: { id: serviceId } });
+    if (svc && svc.objectId === objectId) {
+      finalServiceId = svc.id;
+      serviceName = svc.name;
+    }
+  }
 
   let code = generateVoucherCode();
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -82,6 +102,8 @@ export async function createVoucherAction(
     data: {
       code,
       objectId,
+      serviceId: finalServiceId,
+      serviceName,
       guestCount,
       cashAmount,
       cardAmount,

@@ -3,6 +3,7 @@ import { AuthError } from "next-auth";
 import { signIn, auth } from "@/lib/auth";
 import { getDictionary } from "@/lib/i18n/getLocale";
 import LocaleSwitch from "@/components/LocaleSwitch";
+import SubmitButton from "@/components/SubmitButton";
 
 async function loginAction(formData: FormData) {
   "use server";
@@ -82,12 +83,11 @@ export default async function LoginPage({
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
-            {t.signIn}
-          </button>
+          <SubmitButton
+            label={t.signIn}
+            pendingLabel={t.saving}
+            className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-60"
+          />
         </form>
       </div>
     </div>
