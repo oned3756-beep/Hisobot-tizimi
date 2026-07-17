@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import LogoutButton from "@/components/LogoutButton";
 import LocaleSwitch from "@/components/LocaleSwitch";
 import { getDictionary } from "@/lib/i18n/getLocale";
@@ -11,6 +12,16 @@ export default async function CashierLayout({
 }) {
   const session = await auth();
   const { locale, t } = await getDictionary();
+  const organization = session?.user?.organizationId
+    ? await prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+      })
+    : null;
+  const organizationName = organization
+    ? locale === "ru"
+      ? organization.nameRu
+      : organization.nameUz
+    : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -26,9 +37,7 @@ export default async function CashierLayout({
           </nav>
           <div className="flex items-center gap-3">
             <LocaleSwitch locale={locale} path="/cashier" />
-            <span className="text-sm text-slate-500">
-              {session?.user?.name}
-            </span>
+            <span className="text-sm text-slate-500">{organizationName}</span>
             <LogoutButton label={t.logout} />
           </div>
         </div>

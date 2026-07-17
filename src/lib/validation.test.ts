@@ -74,13 +74,23 @@ describe("createUserSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a valid cashier account payload without an objectId", () => {
+  it("accepts a valid cashier account payload with an organizationId", () => {
+    const result = createUserSchema.safeParse({
+      username: "kassir",
+      password: "kassir123",
+      role: "CASHIER",
+      organizationId: "org123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a cashier account without an organizationId", () => {
     const result = createUserSchema.safeParse({
       username: "kassir",
       password: "kassir123",
       role: "CASHIER",
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
   });
 
   it("rejects a staff account without an objectId", () => {
