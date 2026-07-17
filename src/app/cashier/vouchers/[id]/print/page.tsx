@@ -29,34 +29,56 @@ export default async function VoucherPrintPage({
     notFound();
   }
 
-  const qrDataUrl = await QRCode.toDataURL(voucher.code, { width: 220, margin: 1 });
+  const qrDataUrl = await QRCode.toDataURL(voucher.code, {
+    width: 240,
+    margin: 1,
+    color: { dark: "#0f172a", light: "#ffffff" },
+  });
   const objectName = locale === "ru" ? voucher.object.nameRu : voucher.object.nameUz;
+  const organizationName =
+    locale === "ru" ? voucher.organization.nameRu : voucher.organization.nameUz;
   const soldAt = formatDateTime(voucher.soldAt);
 
   const Stub = ({ label }: { label: string }) => (
-    <div className="rounded-xl border-2 border-dashed border-slate-300 p-6 text-center">
-      <div className="mb-3 text-xs font-bold tracking-wide text-slate-500">
-        {label}
+    <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm print:break-inside-avoid print:shadow-none">
+      <div
+        className="flex items-center justify-between bg-slate-900 px-6 py-3 text-white"
+        style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
+      >
+        <span className="text-xs font-bold tracking-[0.2em]">{label}</span>
+        <span className="text-xs font-medium text-slate-300">
+          {organizationName}
+        </span>
       </div>
-      <div className="mb-2 text-lg font-semibold text-slate-900">
-        {objectName}
-      </div>
-      <img
-        src={qrDataUrl}
-        alt={voucher.code}
-        className="mx-auto mb-3 h-40 w-40"
-      />
-      <div className="mb-1 font-mono text-xl font-bold tracking-widest text-slate-900">
-        {voucher.code}
-      </div>
-      <div className="text-sm text-slate-600">
-        {t.guestCount}: <strong>{voucher.guestCount}</strong>
-      </div>
-      <div className="text-sm text-slate-600">
-        {t.total}: <strong>{formatNumber(Number(voucher.totalAmount))}</strong>
-      </div>
-      <div className="mt-2 text-xs text-slate-400">
-        {t.soldAt}: {soldAt}
+      <div className="grid grid-cols-[auto_1fr] gap-6 bg-white p-6">
+        <div className="flex flex-col items-center">
+          <div className="rounded-xl border-2 border-slate-200 p-2">
+            <img src={qrDataUrl} alt={voucher.code} className="h-36 w-36" />
+          </div>
+          <div className="mt-2 font-mono text-lg font-bold tracking-widest text-slate-900">
+            {voucher.code}
+          </div>
+        </div>
+        <div className="flex flex-col justify-center gap-1.5">
+          <div className="text-xl font-semibold text-slate-900">
+            {objectName}
+          </div>
+          <div className="flex items-center justify-between border-b border-dotted border-slate-200 py-1 text-sm">
+            <span className="text-slate-500">{t.guestCount}</span>
+            <span className="font-semibold text-slate-900">
+              {voucher.guestCount}
+            </span>
+          </div>
+          <div className="flex items-center justify-between border-b border-dotted border-slate-200 py-1 text-sm">
+            <span className="text-slate-500">{t.total}</span>
+            <span className="font-semibold text-slate-900">
+              {formatNumber(Number(voucher.totalAmount))}
+            </span>
+          </div>
+          <div className="pt-1 text-xs text-slate-400">
+            {t.soldAt}: {soldAt}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -70,8 +92,17 @@ export default async function VoucherPrintPage({
         <PrintButton label={t.printVoucher} />
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-3">
         <Stub label={t.guestCopy} />
+
+        <div className="flex items-center gap-3 text-slate-300">
+          <div className="flex-1 border-t-2 border-dashed border-slate-300" />
+          <span aria-hidden className="text-base">
+            ✂
+          </span>
+          <div className="flex-1 border-t-2 border-dashed border-slate-300" />
+        </div>
+
         <Stub label={t.sellerCopy} />
       </div>
 

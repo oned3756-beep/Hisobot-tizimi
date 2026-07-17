@@ -108,3 +108,37 @@ export async function toggleUserActiveAction(formData: FormData) {
   });
   revalidatePath("/admin/users");
 }
+
+export async function deleteUserAction(
+  _prevState: UserFormState,
+  formData: FormData,
+): Promise<UserFormState> {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (target?.role === "ADMIN") {
+    return {
+      success: false,
+      error: "Admin hisobini o'chirib bo'lmaydi.",
+    };
+  }
+
+  const [reportCount, revisionCount, soldCount, usedCount] = await Promise.all([
+    prisma.dailyReport.count({ where: { createdById: id } }),
+    prisma.reportRevision.count({ where: { editedById: id } }),
+    prisma.voucher.count({ where: { soldById: id } }),
+    prisma.voucher.count({ where: { usedById: id } }),
+  ]);
+
+  if (reportCount > 0 || revisionCount > 0 || soldCount > 0 || usedCount > 0) {
+    return {
+      success: false,
+      error: `Bu foydalanuvchini o'chirib bo'lmaydi: unga bog'liq ${reportCount} ta hisobot, ${revisionCount} ta tahrir yozuvi, ${soldCount} ta sotilgan vaucher, ${usedCount} ta qabul qilingan vaucher bor. Buning o'rniga faolsizlantiring.`,
+    };
+  }
+
+  await prisma.user.delete({ where: { id } });
+  revalidatePath("/admin/users");
+  return { success: true };
+}

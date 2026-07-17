@@ -144,6 +144,20 @@ export async function redeemVoucherAction(
   return { success: true, guestCount: voucher.guestCount };
 }
 
+export async function deleteVoucherAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return;
+  }
+  const id = formData.get("id") as string;
+  const voucher = await prisma.voucher.findUnique({ where: { id } });
+  if (!voucher || voucher.status === "USED") {
+    return;
+  }
+  await prisma.voucher.delete({ where: { id } });
+  revalidatePath("/admin/vouchers");
+}
+
 export async function getVoucherById(id: string) {
   return prisma.voucher.findUnique({
     where: { id },

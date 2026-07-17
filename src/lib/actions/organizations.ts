@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { objectSchema } from "@/lib/validation";
+import { organizationSchema } from "@/lib/validation";
 
 export type OrganizationFormState = {
   success: boolean;
@@ -28,10 +28,11 @@ export async function createOrganizationAction(
 ): Promise<OrganizationFormState> {
   await requireAdmin();
 
-  const parsed = objectSchema.safeParse({
+  const parsed = organizationSchema.safeParse({
     nameUz: formData.get("nameUz"),
     nameRu: formData.get("nameRu"),
     slug: formData.get("slug"),
+    commissionPercent: formData.get("commissionPercent"),
   });
 
   if (!parsed.success) {
@@ -74,10 +75,11 @@ export async function updateOrganizationAction(
   await requireAdmin();
 
   const id = formData.get("id") as string;
-  const parsed = objectSchema.safeParse({
+  const parsed = organizationSchema.safeParse({
     nameUz: formData.get("nameUz"),
     nameRu: formData.get("nameRu"),
     slug: formData.get("slug"),
+    commissionPercent: formData.get("commissionPercent"),
   });
 
   if (!parsed.success) {
@@ -123,4 +125,30 @@ export async function toggleOrganizationActiveAction(formData: FormData) {
   });
   revalidatePath("/admin/organizations");
   revalidatePath("/report");
+}
+
+export async function deleteOrganizationAction(
+  _prevState: OrganizationFormState,
+  formData: FormData,
+): Promise<OrganizationFormState> {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+
+  const [entryCount, voucherCount, userCount] = await Promise.all([
+    prisma.reportOrganizationEntry.count({ where: { organizationId: id } }),
+    prisma.voucher.count({ where: { organizationId: id } }),
+    prisma.user.count({ where: { organizationId: id } }),
+  ]);
+
+  if (entryCount > 0 || voucherCount > 0 || userCount > 0) {
+    return {
+      success: false,
+      error: `Bu tashkilotni o'chirib bo'lmaydi: unga bog'liq ${entryCount} ta hisobot yozuvi, ${voucherCount} ta vaucher, ${userCount} ta foydalanuvchi bor. Avval ularni ko'chiring yoki tashkilotni faolsizlantiring.`,
+    };
+  }
+
+  await prisma.organization.delete({ where: { id } });
+  revalidatePath("/admin/organizations");
+  revalidatePath("/report");
+  return { success: true };
 }

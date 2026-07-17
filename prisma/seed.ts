@@ -24,6 +24,11 @@ async function main() {
     { nameUz: "Mehmonhona", nameRu: "Гостиница", slug: "mehmonhona" },
     { nameUz: "Xojatxona", nameRu: "Туалет", slug: "xojatxona" },
     { nameUz: "Parkovka", nameRu: "Парковка", slug: "parkovka" },
+    { nameUz: "Jumping", nameRu: "Джампинг", slug: "jumping" },
+    { nameUz: "Arqondan sakrash", nameRu: "Роупджампинг", slug: "arqondan-sakrash" },
+    { nameUz: "Bolalar maydonchasi", nameRu: "Детская площадка", slug: "bolalar-maydonchasi" },
+    { nameUz: "Kvadrosikl", nameRu: "Квадроцикл", slug: "kvadrosikl" },
+    { nameUz: "Havo shari", nameRu: "Воздушный шар", slug: "havo-shari" },
   ];
 
   for (const obj of objects) {
@@ -46,20 +51,32 @@ async function main() {
     });
   }
 
-  const cashierPasswordHash = await bcrypt.hash("kassir123", 10);
-  await prisma.user.upsert({
-    where: { username: "kassir" },
+  const organization = await prisma.organization.upsert({
+    where: { slug: "abc-tour" },
     update: {},
     create: {
-      username: "kassir",
+      nameUz: "ABC Tour",
+      nameRu: "ABC Тур",
+      slug: "abc-tour",
+      commissionPercent: 20,
+    },
+  });
+
+  const cashierPasswordHash = await bcrypt.hash("kassir123", 10);
+  await prisma.user.upsert({
+    where: { username: "abc-tour" },
+    update: {},
+    create: {
+      username: "abc-tour",
       passwordHash: cashierPasswordHash,
       role: "CASHIER",
+      organizationId: organization.id,
     },
   });
 
   console.log("Seed complete.");
   console.log("Admin login: admin / admin123");
-  console.log("Cashier login: kassir / kassir123");
+  console.log("Cashier login (ABC Tour, 20% komissiya): abc-tour / kassir123");
   console.log(
     "Staff logins: " +
       objects.map((o) => `${o.slug}/staff123`).join(", "),

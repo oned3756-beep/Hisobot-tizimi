@@ -102,3 +102,28 @@ export async function toggleObjectActiveAction(formData: FormData) {
   });
   revalidatePath("/admin/objects");
 }
+
+export async function deleteObjectAction(
+  _prevState: ObjectFormState,
+  formData: FormData,
+): Promise<ObjectFormState> {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+
+  const [reportCount, voucherCount, userCount] = await Promise.all([
+    prisma.dailyReport.count({ where: { objectId: id } }),
+    prisma.voucher.count({ where: { objectId: id } }),
+    prisma.user.count({ where: { objectId: id } }),
+  ]);
+
+  if (reportCount > 0 || voucherCount > 0 || userCount > 0) {
+    return {
+      success: false,
+      error: `Bu obyektni o'chirib bo'lmaydi: unga bog'liq ${reportCount} ta hisobot, ${voucherCount} ta vaucher, ${userCount} ta foydalanuvchi bor. Avval ularni ko'chiring yoki obyektni faolsizlantiring.`,
+    };
+  }
+
+  await prisma.businessObject.delete({ where: { id } });
+  revalidatePath("/admin/objects");
+  return { success: true };
+}

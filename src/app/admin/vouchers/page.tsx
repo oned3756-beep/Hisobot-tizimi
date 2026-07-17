@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { todayInTashkent, daysAgoInTashkent, isValidDateString } from "@/lib/date";
 import { listAllVouchers, getVoucherSummary } from "@/lib/queries/vouchers";
+import { deleteVoucherAction } from "@/lib/actions/vouchers";
 import { getDictionary } from "@/lib/i18n/getLocale";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 function formatNumber(n: number) {
   return n.toLocaleString("en-US");
@@ -48,11 +50,25 @@ export default async function AdminVouchersPage({
     getVoucherSummary(filter),
   ]);
 
+  const exportParams = new URLSearchParams();
+  exportParams.set("from", from);
+  exportParams.set("to", to);
+  if (status) exportParams.set("status", status);
+  objectIds.forEach((id) => exportParams.append("objects", id));
+
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold text-slate-900">
-        {t.adminVouchersTitle}
-      </h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-slate-900">
+          {t.adminVouchersTitle}
+        </h1>
+        <a
+          href={`/admin/vouchers/export?${exportParams.toString()}`}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
+        >
+          {t.exportExcel}
+        </a>
+      </div>
 
       <form
         method="GET"
@@ -124,11 +140,12 @@ export default async function AdminVouchersPage({
         </button>
       </form>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
         <SummaryCard label={t.soldCount} value={formatNumber(summary.soldCount)} />
         <SummaryCard label={t.usedCount} value={formatNumber(summary.count)} />
         <SummaryCard label={t.visitorCount} value={formatNumber(summary.guestCount)} />
         <SummaryCard label={t.total} value={formatNumber(summary.totalAmount)} highlight />
+        <SummaryCard label={t.totalCommission} value={formatNumber(summary.totalCommission)} />
       </div>
 
       {vouchers.length === 0 ? (
@@ -140,12 +157,15 @@ export default async function AdminVouchersPage({
               <tr className="border-b border-slate-200 text-left text-slate-500">
                 <th className="px-4 py-2 font-medium">{t.voucherCode}</th>
                 <th className="px-4 py-2 font-medium">{t.object}</th>
+                <th className="px-4 py-2 font-medium">{t.organization}</th>
                 <th className="px-4 py-2 font-medium">{t.guestCount}</th>
                 <th className="px-4 py-2 font-medium">{t.total}</th>
+                <th className="px-4 py-2 font-medium">{t.commission}</th>
                 <th className="px-4 py-2 font-medium">{t.statusLabel}</th>
                 <th className="px-4 py-2 font-medium">{t.soldBy}</th>
                 <th className="px-4 py-2 font-medium">{t.usedBy}</th>
                 <th className="px-4 py-2 font-medium">{t.soldAt}</th>
+                <th className="px-4 py-2 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -157,9 +177,19 @@ export default async function AdminVouchersPage({
                   <td className="px-4 py-2 text-slate-800">
                     {locale === "ru" ? v.object.nameRu : v.object.nameUz}
                   </td>
+                  <td className="px-4 py-2 text-slate-800">
+                    {locale === "ru"
+                      ? v.organization.nameRu
+                      : v.organization.nameUz}
+                  </td>
                   <td className="px-4 py-2 text-slate-600">{v.guestCount}</td>
                   <td className="px-4 py-2 text-slate-600">
                     {formatNumber(Number(v.totalAmount))}
+                  </td>
+                  <td className="px-4 py-2 text-slate-600">
+                    {v.status === "USED"
+                      ? formatNumber(Number(v.commissionAmount))
+                      : "—"}
                   </td>
                   <td className="px-4 py-2">
                     <span
@@ -182,6 +212,18 @@ export default async function AdminVouchersPage({
                   </td>
                   <td className="px-4 py-2 text-slate-500">
                     {formatDateTime(v.soldAt)}
+                  </td>
+                  <td className="px-4 py-2">
+                    {v.status === "UNUSED" && (
+                      <form action={deleteVoucherAction}>
+                        <input type="hidden" name="id" value={v.id} />
+                        <ConfirmSubmitButton
+                          label={t.delete}
+                          confirmMessage={t.confirmDelete}
+                          className="rounded-md border border-red-300 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
+                        />
+                      </form>
+                    )}
                   </td>
                 </tr>
               ))}

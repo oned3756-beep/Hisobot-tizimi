@@ -29,9 +29,32 @@ export function buildVoucherWhere(
 export async function listAllVouchers(filter: VoucherFilter) {
   return prisma.voucher.findMany({
     where: buildVoucherWhere(filter),
-    include: { object: true, soldBy: true, usedBy: true },
+    include: { object: true, organization: true, soldBy: true, usedBy: true },
     orderBy: { soldAt: "desc" },
   });
+}
+
+export async function getOrganizationVoucherStats(): Promise<
+  Record<string, { soldCount: number; totalCommission: number }>
+> {
+  const vouchers = await prisma.voucher.findMany({
+    select: { organizationId: true, status: true, commissionAmount: true },
+  });
+
+  const stats: Record<string, { soldCount: number; totalCommission: number }> =
+    {};
+  for (const v of vouchers) {
+    const entry = stats[v.organizationId] ?? {
+      soldCount: 0,
+      totalCommission: 0,
+    };
+    entry.soldCount += 1;
+    if (v.status === "USED") {
+      entry.totalCommission += Number(v.commissionAmount);
+    }
+    stats[v.organizationId] = entry;
+  }
+  return stats;
 }
 
 export async function getVoucherSummary(filter: VoucherFilter) {
@@ -39,7 +62,7 @@ export async function getVoucherSummary(filter: VoucherFilter) {
     prisma.voucher.count({ where: buildVoucherWhere(filter) }),
     prisma.voucher.findMany({
       where: { ...buildVoucherWhere(filter), status: "USED" },
-      select: { guestCount: true, totalAmount: true },
+      select: { guestCount: true, totalAmount: true, commissionAmount: true },
     }),
   ]);
 
@@ -48,8 +71,9 @@ export async function getVoucherSummary(filter: VoucherFilter) {
       count: acc.count + 1,
       guestCount: acc.guestCount + v.guestCount,
       totalAmount: acc.totalAmount + Number(v.totalAmount),
+      totalCommission: acc.totalCommission + Number(v.commissionAmount),
     }),
-    { count: 0, guestCount: 0, totalAmount: 0 },
+    { count: 0, guestCount: 0, totalAmount: 0, totalCommission: 0 },
   );
 
   return { soldCount: sold, ...usedSummary };

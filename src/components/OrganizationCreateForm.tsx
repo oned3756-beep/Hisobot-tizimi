@@ -60,6 +60,21 @@ export default function OrganizationCreateForm({
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
         />
       </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-500">
+          {t.commissionPercent}
+        </label>
+        <input
+          name="commissionPercent"
+          type="number"
+          required
+          min={0}
+          max={100}
+          step="0.01"
+          defaultValue={20}
+          className="w-24 rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none"
+        />
+      </div>
       <div className="flex flex-wrap gap-3">
         <span className="mb-1 block w-full text-xs font-medium text-slate-500">
           {t.appliesToObjects}

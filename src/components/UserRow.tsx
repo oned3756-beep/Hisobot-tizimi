@@ -4,9 +4,11 @@ import { useActionState } from "react";
 import {
   resetPasswordAction,
   toggleUserActiveAction,
+  deleteUserAction,
   type UserFormState,
 } from "@/lib/actions/users";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 const initialState: UserFormState = { success: false };
 
@@ -26,6 +28,10 @@ export default function UserRow({
 }) {
   const [state, formAction, pending] = useActionState(
     resetPasswordAction,
+    initialState,
+  );
+  const [deleteState, deleteAction] = useActionState(
+    deleteUserAction,
     initialState,
   );
 
@@ -76,15 +82,32 @@ export default function UserRow({
         </form>
       </td>
       <td className="px-2 py-2">
-        <form action={toggleUserActiveAction}>
-          <input type="hidden" name="id" value={user.id} />
-          <button
-            type="submit"
-            className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
-          >
-            {user.isActive ? t.disable : t.enable}
-          </button>
-        </form>
+        <div className="flex flex-wrap items-center gap-2">
+          <form action={toggleUserActiveAction}>
+            <input type="hidden" name="id" value={user.id} />
+            <button
+              type="submit"
+              className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 transition hover:bg-slate-100"
+            >
+              {user.isActive ? t.disable : t.enable}
+            </button>
+          </form>
+          {user.role !== "ADMIN" && (
+            <form action={deleteAction}>
+              <input type="hidden" name="id" value={user.id} />
+              <ConfirmSubmitButton
+                label={t.delete}
+                confirmMessage={t.confirmDelete}
+                className="rounded-md border border-red-300 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
+              />
+            </form>
+          )}
+          {deleteState.error && (
+            <span className="w-full text-xs text-red-600">
+              {deleteState.error}
+            </span>
+          )}
+        </div>
       </td>
     </tr>
   );

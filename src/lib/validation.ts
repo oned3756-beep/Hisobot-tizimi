@@ -23,6 +23,12 @@ export const objectSchema = z.object({
 
 export type ObjectInput = z.infer<typeof objectSchema>;
 
+export const organizationSchema = objectSchema.extend({
+  commissionPercent: z.coerce.number().min(0).max(100),
+});
+
+export type OrganizationInput = z.infer<typeof organizationSchema>;
+
 export const createUserSchema = z
   .object({
     username: z.string().min(3).max(50),
