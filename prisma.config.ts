@@ -10,6 +10,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Migratsiyalar to'g'ridan-to'g'ri ulanishni ishlatadi (DIRECT_URL);
+    // agar berilmagan bo'lsa, DATABASE_URL'ga qaytadi (local dev).
+    url: process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"],
   },
 });
