@@ -134,14 +134,20 @@ export async function redeemVoucherAction(
     return { success: false, error: "Bu vaucher allaqachon ishlatilgan" };
   }
 
-  await prisma.voucher.update({
-    where: { id: voucher.id },
+  // Atomik: faqat hali UNUSED bo'lsa yangilaydi. Ikki xodim bir vaqtda
+  // skaner qilsa, faqat bittasi muvaffaqiyat oladi.
+  const result = await prisma.voucher.updateMany({
+    where: { id: voucher.id, status: "UNUSED" },
     data: {
       status: "USED",
       usedAt: new Date(),
       usedById: session.user.id,
     },
   });
+
+  if (result.count === 0) {
+    return { success: false, error: "Bu vaucher allaqachon ishlatilgan" };
+  }
 
   revalidatePath("/report");
   revalidatePath("/admin/vouchers");
