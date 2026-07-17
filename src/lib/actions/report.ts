@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { reportSchema } from "@/lib/validation";
+import { reportSchema, adminReportEditSchema } from "@/lib/validation";
 import { notifyReportSaved } from "@/lib/telegram";
 
 export type SaveReportState = {
@@ -164,6 +164,94 @@ export async function saveReportAction(
   return { success: true };
 }
 
+export async function adminUpdateReportAction(
+  _prevState: SaveReportState,
+  formData: FormData,
+): Promise<SaveReportState> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Ruxsat yo'q" };
+  }
+
+  const reportId = formData.get("reportId") as string;
+  const parsed = adminReportEditSchema.safeParse({
+    visitorCount: formData.get("visitorCount"),
+    cashAmount: formData.get("cashAmount"),
+    cardAmount: formData.get("cardAmount"),
+    transferAmount: formData.get("transferAmount"),
+    qrAmount: formData.get("qrAmount"),
+    comment: formData.get("comment"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Ma'lumotlarda xatolik bor",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const existing = await prisma.dailyReport.findUnique({
+    where: { id: reportId },
+    include: { organizationEntries: { include: { organization: true } } },
+  });
+  if (!existing) {
+    return { success: false, error: "Hisobot topilmadi" };
+  }
+
+  const { visitorCount, cashAmount, cardAmount, transferAmount, qrAmount, comment } =
+    parsed.data;
+  const totalAmount = cashAmount + cardAmount + transferAmount + qrAmount;
+
+  await prisma.$transaction([
+    prisma.reportRevision.create({
+      data: {
+        reportId: existing.id,
+        editedById: session.user.id,
+        snapshot: {
+          visitorCount: existing.visitorCount,
+          cashAmount: Number(existing.cashAmount),
+          cardAmount: Number(existing.cardAmount),
+          transferAmount: Number(existing.transferAmount),
+          qrAmount: Number(existing.qrAmount),
+          totalAmount: Number(existing.totalAmount),
+          comment: existing.comment,
+          organizationEntries: existing.organizationEntries.map((e) => ({
+            organizationName: e.organization.nameUz,
+            visitorCount: e.visitorCount,
+          })),
+        },
+      },
+    }),
+    prisma.dailyReport.update({
+      where: { id: reportId },
+      data: {
+        visitorCount,
+        cashAmount,
+        cardAmount,
+        transferAmount,
+        qrAmount,
+        totalAmount,
+        comment: comment || null,
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/reports/${reportId}/history`);
+  return { success: true };
+}
+
+export async function deleteReportAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return;
+  }
+  const id = formData.get("id") as string;
+  await prisma.dailyReport.delete({ where: { id } }).catch(() => null);
+  revalidatePath("/admin");
+}
+
 export async function getReportForDate(objectId: string, date: string) {
   const parsedDate = new Date(`${date}T00:00:00.000Z`);
   return prisma.dailyReport.findUnique({
@@ -178,6 +266,13 @@ export async function listReportsForObject(objectId: string, limit = 30) {
     orderBy: { date: "desc" },
     take: limit,
     include: { organizationEntries: { include: { organization: true } } },
+  });
+}
+
+export async function getReportById(reportId: string) {
+  return prisma.dailyReport.findUnique({
+    where: { id: reportId },
+    include: { object: true },
   });
 }
 

@@ -119,6 +119,10 @@ export const dictionaries = {
     noVouchers: "Vaucherlar topilmadi",
     statusLabel: "Holat",
     allStatuses: "Barchasi",
+    editVoucherTitle: "Vaucherni tahrirlash",
+    editReportTitle: "Hisobotni tahrirlash",
+    voucherUpdated: "Vaucher yangilandi",
+    backToVouchers: "Vaucherlarga qaytash",
   },
   ru: {
     appTitle: "Система отчётов",
@@ -240,6 +244,10 @@ export const dictionaries = {
     noVouchers: "Ваучеры не найдены",
     statusLabel: "Статус",
     allStatuses: "Все",
+    editVoucherTitle: "Изменить ваучер",
+    editReportTitle: "Изменить отчёт",
+    voucherUpdated: "Ваучер обновлён",
+    backToVouchers: "Назад к ваучерам",
   },
 } as const;
 

@@ -63,3 +63,20 @@ export const voucherSchema = z.object({
 export const redeemVoucherSchema = z.object({
   code: z.string().min(1, "Kod kiritilishi shart"),
 });
+
+export const adminVoucherEditSchema = z.object({
+  guestCount: z.coerce.number().int().min(1, "Kamida 1 kishi bo'lishi kerak"),
+  cashAmount: z.coerce.number().min(0),
+  cardAmount: z.coerce.number().min(0),
+  transferAmount: z.coerce.number().min(0),
+  qrAmount: z.coerce.number().min(0),
+});
+
+export const adminReportEditSchema = z.object({
+  visitorCount: z.coerce.number().int().min(0),
+  cashAmount: z.coerce.number().min(0),
+  cardAmount: z.coerce.number().min(0),
+  transferAmount: z.coerce.number().min(0),
+  qrAmount: z.coerce.number().min(0),
+  comment: z.string().max(2000).optional().or(z.literal("")),
+});

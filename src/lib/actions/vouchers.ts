@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { voucherSchema, redeemVoucherSchema } from "@/lib/validation";
+import {
+  voucherSchema,
+  redeemVoucherSchema,
+  adminVoucherEditSchema,
+} from "@/lib/validation";
 import { todayInTashkent } from "@/lib/date";
 
 export type VoucherFormState = {
@@ -150,12 +154,63 @@ export async function deleteVoucherAction(formData: FormData) {
     return;
   }
   const id = formData.get("id") as string;
-  const voucher = await prisma.voucher.findUnique({ where: { id } });
-  if (!voucher || voucher.status === "USED") {
-    return;
-  }
-  await prisma.voucher.delete({ where: { id } });
+  await prisma.voucher.delete({ where: { id } }).catch(() => null);
   revalidatePath("/admin/vouchers");
+}
+
+export async function updateVoucherAction(
+  _prevState: VoucherFormState,
+  formData: FormData,
+): Promise<VoucherFormState> {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "ADMIN") {
+    return { success: false, error: "Ruxsat yo'q" };
+  }
+
+  const id = formData.get("id") as string;
+  const parsed = adminVoucherEditSchema.safeParse({
+    guestCount: formData.get("guestCount"),
+    cashAmount: formData.get("cashAmount"),
+    cardAmount: formData.get("cardAmount"),
+    transferAmount: formData.get("transferAmount"),
+    qrAmount: formData.get("qrAmount"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: "Ma'lumotlarda xatolik bor",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const voucher = await prisma.voucher.findUnique({ where: { id } });
+  if (!voucher) {
+    return { success: false, error: "Vaucher topilmadi" };
+  }
+
+  const { guestCount, cashAmount, cardAmount, transferAmount, qrAmount } =
+    parsed.data;
+  const totalAmount = cashAmount + cardAmount + transferAmount + qrAmount;
+  const commissionAmount =
+    (totalAmount * Number(voucher.commissionPercent)) / 100;
+
+  await prisma.voucher.update({
+    where: { id },
+    data: {
+      guestCount,
+      cashAmount,
+      cardAmount,
+      transferAmount,
+      qrAmount,
+      totalAmount,
+      commissionAmount,
+    },
+  });
+
+  revalidatePath("/admin/vouchers");
+  revalidatePath("/admin/organizations");
+  return { success: true };
 }
 
 export async function getVoucherById(id: string) {
