@@ -15,6 +15,7 @@ export default function QrScanner({ t }: { t: Dictionary }) {
   const [dismissed, setDismissed] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const submittedRef = useRef(false);
   const scannerDivId = "qr-reader";
 
   const showResult = (state.success || state.error) && !dismissed;
@@ -24,6 +25,9 @@ export default function QrScanner({ t }: { t: Dictionary }) {
 
     let cancelled = false;
     let scannerInstance: { clear: () => Promise<void> } | null = null;
+    // Har yangi skaner sessiyasida faqat bitta yuborishga ruxsat beramiz —
+    // kamera bir QR'ni ketma-ket o'qib, ikki marta qabul qilib yubormasligi uchun.
+    submittedRef.current = false;
 
     import("html5-qrcode").then(({ Html5QrcodeScanner }) => {
       if (cancelled) return;
@@ -34,8 +38,10 @@ export default function QrScanner({ t }: { t: Dictionary }) {
       );
       scanner.render(
         (decodedText: string) => {
+          if (submittedRef.current) return;
+          submittedRef.current = true;
           if (codeInputRef.current) {
-            codeInputRef.current.value = decodedText;
+            codeInputRef.current.value = decodedText.trim();
           }
           formRef.current?.requestSubmit();
         },
